@@ -1,12 +1,22 @@
+import os
 import spacy
 import streamlit as st
 
-# Load spaCy model
+
+# Function to install spaCy model if missing
+def ensure_spacy_model(model_name):
+    try:
+        nlp = spacy.load(model_name)
+    except OSError:
+        st.warning(f"spaCy model '{model_name}' not found. Installing now...")
+        os.system(f"python -m spacy download {model_name}")
+        nlp = spacy.load(model_name)
+    return nlp
+
+
+# Ensure model is installed
 model_name = "en_core_web_sm"
-try:
-    nlp = spacy.load(model_name)
-except OSError:
-    st.error(f"spaCy model '{model_name}' is missing. Please check installation.")
+nlp = ensure_spacy_model(model_name)
 
 st.set_page_config(page_title="Resume Screening App", layout="wide")
 st.title("Resume Screening App")
