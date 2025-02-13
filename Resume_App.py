@@ -1,11 +1,19 @@
 import os
 import nltk
 import streamlit as st
+import pdfplumber
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
-# Ensure stopwords are downloaded
+# Ensure necessary NLTK resources are downloaded
 nltk.download("stopwords")
+nltk.download("wordnet")
+
+# Initialize NLP tools
+tokenizer = RegexpTokenizer(r'\b[a-zA-Z]{3,}\b')  # Extract only words (no numbers/symbols)
+lemmatizer = WordNetLemmatizer()
+stop_words = set(stopwords.words("english"))
 
 st.set_page_config(page_title="Resume Screening App", layout="wide")
 st.title("Resume Screening App")
@@ -20,20 +28,18 @@ if uploaded_file:
         f.write(uploaded_file.getbuffer())
 
     # Load and process PDF
-    import pdfplumber
-
     with pdfplumber.open("temp.pdf") as pdf:
         text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
 
-    # Use RegexpTokenizer instead of word_tokenize
-    tokenizer = RegexpTokenizer(r'\b\w+\b')  # Tokenizes words only (ignores punctuation)
-    words = tokenizer.tokenize(text)
+    # Tokenization, lemmatization, and stopword removal
+    words = tokenizer.tokenize(text.lower())  # Convert to lowercase and tokenize
+    filtered_words = [
+        lemmatizer.lemmatize(word) for word in words if word not in stop_words  # Remove stopwords & lemmatize
+    ]
 
-    # Remove stopwords
-    filtered_words = [word for word in words if word.lower() not in stopwords.words("english")]
-
+    # Display extracted words
     st.subheader("Extracted Keywords:")
-    st.write(filtered_words)
+    st.write(list(set(filtered_words)))  # Remove duplicates
 
     os.remove("temp.pdf")  # Cleanup temp file
 
