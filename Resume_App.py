@@ -1,15 +1,11 @@
 import os
 import nltk
 import streamlit as st
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 
-# Ensure all required NLTK resources are downloaded
-nltk.download("punkt")
+# Ensure stopwords are downloaded
 nltk.download("stopwords")
-nltk.download("averaged_perceptron_tagger")
-nltk.download("wordnet")
-nltk.download("omw-1.4")
 
 st.set_page_config(page_title="Resume Screening App", layout="wide")
 st.title("Resume Screening App")
@@ -29,16 +25,15 @@ if uploaded_file:
     with pdfplumber.open("temp.pdf") as pdf:
         text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
 
-    # Process text using NLTK
-    try:
-        words = word_tokenize(text)  # Tokenize words
-        filtered_words = [word for word in words if word.isalnum()]  # Remove punctuation
-        filtered_words = [word for word in filtered_words if word.lower() not in stopwords.words("english")]
+    # Use RegexpTokenizer instead of word_tokenize
+    tokenizer = RegexpTokenizer(r'\b\w+\b')  # Tokenizes words only (ignores punctuation)
+    words = tokenizer.tokenize(text)
 
-        st.subheader("Extracted Keywords:")
-        st.write(filtered_words)
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+    # Remove stopwords
+    filtered_words = [word for word in words if word.lower() not in stopwords.words("english")]
+
+    st.subheader("Extracted Keywords:")
+    st.write(filtered_words)
 
     os.remove("temp.pdf")  # Cleanup temp file
 
