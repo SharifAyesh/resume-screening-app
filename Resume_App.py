@@ -1,62 +1,43 @@
-import os
 import pandas as pd
 import nltk
 import streamlit as st
-import pdfplumber
-from nltk.tokenize import RegexpTokenizer
+from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
 
-# Ensure necessary NLTK resources are downloaded
-nltk.download("stopwords")
-nltk.download("wordnet")
+# Ensure NLTK dependencies are downloaded
+nltk.download('punkt')
+nltk.download('stopwords')
 
-# Initialize NLP tools
-tokenizer = RegexpTokenizer(r'\b[a-zA-Z]{3,}\b')  # Extract only words (no numbers/symbols)
-lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words("english"))
-
-st.set_page_config(page_title="Resume Screening App", layout="wide")
-st.title("Resume Screening App")
-
-st.write("Upload resumes and extract key skills using NLP!")
-
-# Load the CSV file containing job skills
-csv_path = "data/job_skills_dataset.csv"  # Update the path if needed
-if os.path.exists(csv_path):
-    df_skills = pd.read_csv(csv_path)
-    predefined_skills = set(df_skills["Skills"].dropna().str.lower())  # Convert to lowercase for comparison
-else:
-    predefined_skills = set()
+# Load job skills dataset
+csv_path = "Data_job_skills_dataset.csv"  # Ensure this matches your file path
+try:
+    df = pd.read_csv(csv_path)
+    job_skills = set(df["Skills"].str.split(",").explode().str.strip().unique())  # Extract skills
+except FileNotFoundError:
     st.error("CSV file not found. Please check the file path.")
+    job_skills = set()
 
-# Upload and process resumes
+# Streamlit App UI
+st.title("Resume Screening App")
+st.subheader("Upload resumes and extract key skills using NLP!")
+
 uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
-
 if uploaded_file:
-    with open("temp.pdf", "wb") as f:
-        f.write(uploaded_file.getbuffer())
+    import pdfplumber
 
-    # Load and process PDF
-    with pdfplumber.open("temp.pdf") as pdf:
+    with pdfplumber.open(uploaded_file) as pdf:
         text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
 
-    # Tokenization, lemmatization, and stopword removal
-    words = tokenizer.tokenize(text.lower())  # Convert to lowercase and tokenize
-    filtered_words = [
-        lemmatizer.lemmatize(word) for word in words if word not in stop_words  # Remove stopwords & lemmatize
-    ]
+    # Process text using NLTK
+    words = word_tokenize(text)
+    filtered_words = [word for word in words if word.isalnum()]
+    filtered_words = [word for word in filtered_words if word.lower() not in stopwords.words('english')]
 
-    # Match words with predefined skills
-    matched_skills = list(set(filtered_words) & predefined_skills)
+    # Extract matched skills
+    matched_skills = sorted(set(filtered_words) & job_skills)
 
-    # Display extracted skills
     st.subheader("Extracted Skills:")
     if matched_skills:
-        st.write(matched_skills)
+        st.write(", ".join(matched_skills))
     else:
-        st.warning("No matching skills found in the resume.")
-
-    os.remove("temp.pdf")  # Cleanup temp file
-
-st.success("Ready to analyze resumes!")
+        st.write("No matching skills found in the resume.")
