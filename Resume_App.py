@@ -27,7 +27,7 @@ if uploaded_file:
         text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
 
     # Process text using NLTK
-    words = word_tokenize(text)
+    words = word_tokenize(text)  # Tokenize words
     filtered_words = [word for word in words if word.isalnum()]  # Remove punctuation
     filtered_words = [word for word in filtered_words if word.lower() not in stopwords.words("english")]
 
