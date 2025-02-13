@@ -1,18 +1,24 @@
 import os
 import spacy
+import subprocess
 import streamlit as st
 
-# Ensure spaCy model is installed before loading
+# Ensure the spaCy model is installed before loading
 model_name = "en_core_web_sm"
+
 try:
+    # Try to load the model
     nlp = spacy.load(model_name)
 except OSError:
-    st.warning(f"spaCy model '{model_name}' not found. Downloading...")
-    os.system(f"python -m spacy download {model_name}")
+    st.warning(f"spaCy model '{model_name}' not found. Installing now...")
+
+    # Force install the model
+    subprocess.run(["python", "-m", "spacy", "download", model_name], check=True)
+
+    # Load again after installation
     nlp = spacy.load(model_name)
 
 st.set_page_config(page_title="Resume Screening App", layout="wide")
-
 st.title("Resume Screening App")
 
 st.write("Upload resumes and extract key skills using NLP!")
@@ -40,4 +46,3 @@ if uploaded_file:
     os.remove("temp.pdf")  # Cleanup temp file
 
 st.success("Ready to analyze resumes!")
-
