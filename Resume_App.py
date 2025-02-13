@@ -4,12 +4,13 @@ import streamlit as st
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 
-# Ensure NLTK dependencies are downloaded
-nltk.download('punkt')
-nltk.download('stopwords')
+# Ensure NLTK dependencies are downloaded to the correct directory
+nltk.data.path.append("/home/adminuser/nltk_data")
+nltk.download('punkt', download_dir="/home/adminuser/nltk_data")
+nltk.download('stopwords', download_dir="/home/adminuser/nltk_data")
 
 # Load job skills dataset
-csv_path = "Data/data_job_skills_dataset.csv"  # Corrected file path
+csv_path = "Data/data_job_skills_dataset.csv"  # Adjust the path if needed
 try:
     df = pd.read_csv(csv_path)
     job_skills = set(df["Skills"].str.split(",").explode().str.strip().unique())  # Extract skills
@@ -28,8 +29,13 @@ if uploaded_file:
     with pdfplumber.open(uploaded_file) as pdf:
         text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
 
-    # Process text using NLTK
-    words = word_tokenize(text)
+    # Process text using NLTK with fallback if punkt is missing
+    try:
+        words = word_tokenize(text)
+    except LookupError:
+        nltk.download('punkt', download_dir="/home/adminuser/nltk_data")
+        words = word_tokenize(text)
+
     filtered_words = [word for word in words if word.isalnum()]
     filtered_words = [word for word in filtered_words if word.lower() not in stopwords.words('english')]
 
