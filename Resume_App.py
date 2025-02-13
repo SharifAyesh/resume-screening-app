@@ -9,7 +9,8 @@ nltk.download('punkt')
 nltk.download('stopwords')
 
 # Load job skills dataset
-csv_path = "Data_job_skills_dataset.csv"  # Ensure this matches your file path
+csv_path = "Data/data_job_skills_dataset.csv"
+   # Ensure this matches your file path
 try:
     df = pd.read_csv(csv_path)
     job_skills = set(df["Skills"].str.split(",").explode().str.strip().unique())  # Extract skills
