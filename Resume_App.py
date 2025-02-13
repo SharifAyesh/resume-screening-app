@@ -1,22 +1,16 @@
 import os
 import spacy
-import subprocess
 import streamlit as st
 
-# Ensure the spaCy model is installed before loading
+# Ensure spaCy model is installed before loading
 model_name = "en_core_web_sm"
 
-try:
-    # Try to load the model
-    nlp = spacy.load(model_name)
-except OSError:
+if not spacy.util.is_package(model_name):
     st.warning(f"spaCy model '{model_name}' not found. Installing now...")
+    os.system(f"pip install {model_name}")
 
-    # Force install the model
-    subprocess.run(["python", "-m", "spacy", "download", model_name], check=True)
-
-    # Load again after installation
-    nlp = spacy.load(model_name)
+# Load the model after ensuring it's installed
+nlp = spacy.load(model_name)
 
 st.set_page_config(page_title="Resume Screening App", layout="wide")
 st.title("Resume Screening App")
