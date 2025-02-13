@@ -3,6 +3,4 @@ pdfplumber
 pandas
 numpy
 scikit-learn
-spacy
-spacy-lookups-data
-
+nltk

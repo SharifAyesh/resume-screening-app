@@ -1,22 +1,12 @@
 import os
-import spacy
+import nltk
 import streamlit as st
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 
-
-# Function to install spaCy model if missing
-def ensure_spacy_model(model_name):
-    try:
-        nlp = spacy.load(model_name)
-    except OSError:
-        st.warning(f"spaCy model '{model_name}' not found. Installing now...")
-        os.system(f"python -m spacy download {model_name}")
-        nlp = spacy.load(model_name)
-    return nlp
-
-
-# Ensure model is installed
-model_name = "en_core_web_sm"
-nlp = ensure_spacy_model(model_name)
+# Ensure NLTK dependencies are downloaded
+nltk.download("punkt")
+nltk.download("stopwords")
 
 st.set_page_config(page_title="Resume Screening App", layout="wide")
 st.title("Resume Screening App")
@@ -36,12 +26,13 @@ if uploaded_file:
     with pdfplumber.open("temp.pdf") as pdf:
         text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
 
-    # Process text using spaCy NLP
-    doc = nlp(text)
-    extracted_skills = [ent.text for ent in doc.ents]
+    # Process text using NLTK
+    words = word_tokenize(text)
+    filtered_words = [word for word in words if word.isalnum()]  # Remove punctuation
+    filtered_words = [word for word in filtered_words if word.lower() not in stopwords.words("english")]
 
-    st.subheader("Extracted Skills:")
-    st.write(extracted_skills)
+    st.subheader("Extracted Keywords:")
+    st.write(filtered_words)
 
     os.remove("temp.pdf")  # Cleanup temp file
 
